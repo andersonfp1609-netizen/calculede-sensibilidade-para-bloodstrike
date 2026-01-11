@@ -1,1 +1,1 @@
-# calculede-sensibilidade-para-bloodstrike
+# calcule-sua-sensibilidade-para-bloodstrike
