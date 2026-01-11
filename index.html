@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Strike Sensi Pro - Mobile</title>
+    <style>
+        :root {
+            --primary: #ff4655; --bg: #0b0e11; --card: #161b22;
+            --text: #e6edf3; --accent: #00ff95; --disparo: #ffb400;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #30363d; }
+        h1 { text-align: center; color: var(--primary); font-size: 1.4rem; text-transform: uppercase; }
+        
+        .section-title { border-bottom: 1px solid #30363d; margin: 20px 0 10px; padding-bottom: 5px; color: var(--primary); font-size: 0.9rem; font-weight: bold; }
+        
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #8b949e; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; box-sizing: border-box; }
+        
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        .results { display: none; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { color: var(--primary); }
+        .val-cam { color: var(--accent); font-weight: bold; }
+        .val-dis { color: var(--disparo); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calculadora Sensi Pro</h1>
+
+    <div class="section-title">CONFIGURAÇÕES BÁSICAS</div>
+    <div class="grid-inputs">
+        <div>
+            <label>Sensi Geral</label>
+            <input type="number" id="sensiGeral" value="120" min="0" max="300">
+        </div>
+        <div>
+            <label>FOV</label>
+            <input type="number" id="fov" value="90" min="60" max="120">
+        </div>
+    </div>
+
+    <div class="section-title">ACELERAÇÃO & IMPULSO</div>
+    <label>Modo de Aceleração</label>
+    <select id="tipoAcel" onchange="toggleImpulsos()">
+        <option value="fixa">Velocidade Fixa (Padrão)</option>
+        <option value="distancia">Impulso de Distância</option>
+        <option value="velocidade">Impulso de Velocidade</option>
+    </select>
+
+    <div id="painelImpulsos" style="display:none;" class="grid-inputs">
+        <div>
+            <label>Valor do Impulso (0-100)</label>
+            <input type="number" id="valorImpulso" value="0">
+        </div>
+    </div>
+
+    <button onclick="calcular()">GERAR CONFIGURAÇÃO COMPLETA</button>
+
+    <div class="results" id="resArea">
+        <div class="section-title">RESULTADOS CALCULADOS</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>MIRA</th>
+                    <th>CÂMERA</th>
+                    <th>DISPARO</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleImpulsos() {
+        const tipo = document.getElementById('tipoAcel').value;
+        document.getElementById('painelImpulsos').style.display = (tipo === 'fixa') ? 'none' : 'grid';
+    }
+
+    function calcular() {
+        const sensi = parseFloat(document.getElementById('sensiGeral').value);
+        const fov = parseFloat(document.getElementById('fov').value);
+        const tipoAcel = document.getElementById('tipoAcel').value;
+        const impulso = parseFloat(document.getElementById('valorImpulso').value) || 0;
+
+        const fovBonus = fov / 90;
+        // Redutor se houver aceleração para não "passar do ponto"
+        const acelRedutor = tipoAcel !== 'fixa' ? (1 - (impulso / 500)) : 1;
+
+        const miras = [
+            { nome: "Ferro / Red Dot", mult: 0.85 },
+            { nome: "Postura Tática", mult: 0.75 },
+            { nome: "Mira 2x", mult: 0.60 },
+            { nome: "Mira 3x", mult: 0.45 },
+            { nome: "Mira 4x", mult: 0.35 },
+            { nome: "Mira 6x", mult: 0.25 },
+            { nome: "Mira 8x", mult: 0.15 }
+        ];
+
+        let html = '';
+        miras.forEach(mira => {
+            let resCam = Math.round(sensi * mira.mult * fovBonus * acelRedutor);
+            // Sensi de disparo costuma ser levemente menor (90% da de camera) para melhor controle
+            let resDis = Math.round(resCam * 0.9);
+
+            // Limites do jogo (0-300)
+            resCam = Math.min(Math.max(resCam, 0), 300);
+            resDis = Math.min(Math.max(resDis, 0), 300);
+
+            html += `<tr>
+                <td>${mira.nome}</td>
+                <td class="val-cam">${resCam}</td>
+                <td class="val-dis">${resDis}</td>
+            </tr>`;
+        });
+
+        document.getElementById('tabelaCorpo').innerHTML = html;
+        document.getElementById('resArea').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
